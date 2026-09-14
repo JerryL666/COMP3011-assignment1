@@ -15,7 +15,7 @@ stopButton.disabled = true;
 async function startRecording() {
 
     try {
-       
+
         // Ask the user for microphone permission
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: true
@@ -49,8 +49,9 @@ async function startRecording() {
             });
 
             statusText.textContent = "Recording complete";
-            transcriptionText.textContent =
-                "Audio recorded successfully.";
+            transcriptionText.textContent = "Uploading audio...";
+
+            uploadAudio();
 
             startButton.disabled = false;
             stopButton.disabled = true;
@@ -65,12 +66,11 @@ async function startRecording() {
         startButton.disabled = true;
         stopButton.disabled = false;
 
-    } 
-	catch (error) {
+    }
+    catch (error) {
 
         console.log("Microphone error:", error);
-        statusText.textContent =
-            "Unable to access microphone.";
+        statusText.textContent = "Unable to access microphone.";
 
         startButton.disabled = false;
         stopButton.disabled = true;
@@ -86,7 +86,30 @@ function stopRecording() {
         statusText.textContent = "Processing recording...";
     }
 }
+async function uploadAudio() {
 
+    const formData = new FormData();
+
+    formData.append("audio", audioBlob, "recording.webm");
+
+    try {
+
+        const response = await fetch("/api/transcribe", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.text();
+
+        transcriptionText.textContent = result;
+
+    } catch (error) {
+
+        console.log("Upload error:", error);
+
+        transcriptionText.textContent = "Failed to upload audio.";
+    }
+}
 
 // Connect buttons to functions
 startButton.addEventListener("click", startRecording);
