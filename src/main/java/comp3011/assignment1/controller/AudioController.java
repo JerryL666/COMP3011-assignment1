@@ -22,6 +22,7 @@ public class AudioController {
     @PostMapping("/api/transcribe")
     public ResponseEntity<String> receiveAudio(
             @RequestParam("audio") MultipartFile audio) {
+    	
 
         if (audio.isEmpty()) {
             return ResponseEntity
@@ -34,8 +35,7 @@ public class AudioController {
 
         try {
 
-            String transcription =
-                    transcriptionService.transcribe(audio);
+            String transcription = transcriptionService.transcribe(audio);
 
             return ResponseEntity.ok(transcription);
 
