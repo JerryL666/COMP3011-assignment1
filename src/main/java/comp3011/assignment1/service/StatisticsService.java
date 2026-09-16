@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class StatisticsService {
-
+	// AI assistance: ChatGPT helped explain the use of AtomicLong.
+	// It keeps the counters thread-safe when multiple requests update them.
     private final AtomicLong inputTokens = new AtomicLong(0);
     private final AtomicLong outputTokens = new AtomicLong(0);
 
