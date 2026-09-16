@@ -11,63 +11,88 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class TranscriptionService {
 
-    private final String apiKey;
-    private final RestClient restClient;
+	private final String apiKey;
+	private final RestClient restClient;
+	private final StatisticsService statisticsService;
 
-    public TranscriptionService(
-            @Value("${OPENAI_API_KEY:}") String apiKey) {
+	public TranscriptionService(@Value("${OPENAI_API_KEY:}") String apiKey, StatisticsService statisticsService) {
 
-        this.apiKey = apiKey;
+		this.apiKey = apiKey;
+		this.statisticsService = statisticsService;
 
-        this.restClient = RestClient.builder()
-                .baseUrl("https://api.openai.com")
-                .build();
-    }
+		this.restClient = RestClient.builder().baseUrl("https://api.openai.com").build();
+	}
+	public static class Usage {
 
-    public String transcribe(MultipartFile audio) {
+	    private long input_tokens;
+	    private long output_tokens;
 
-        if (apiKey.isBlank()) {
-            throw new IllegalStateException(
-                    "OPENAI_API_KEY is not set");
-        }
+	    public long getInputTokens() {
+	        return input_tokens;
+	    }
 
-        MultipartBodyBuilder body = new MultipartBodyBuilder();
+	    public void setInput_tokens(long input_tokens) {
+	        this.input_tokens = input_tokens;
+	    }
 
-        body.part("file", audio.getResource()).contentType(MediaType.parseMediaType("audio/webm"));
+	    public long getOutputTokens() {
+	        return output_tokens;
+	    }
 
-        body.part("model", "gpt-4o-mini-transcribe");
+	    public void setOutput_tokens(long output_tokens) {
+	        this.output_tokens = output_tokens;
+	    }
+	}
 
-        System.out.println("Sending audio to OpenAI");
+	public String transcribe(MultipartFile audio) {
 
-        TranscriptionResponse response = restClient.post()
-                .uri("/v1/audio/transcriptions")
-                .header(
-                        HttpHeaders.AUTHORIZATION,
-                        "Bearer " + apiKey)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(body.build())
-                .retrieve()
-                .body(TranscriptionResponse.class);
+		if (apiKey.isBlank()) {
+			throw new IllegalStateException("OPENAI_API_KEY is not set");
+		}
 
-        if (response == null || response.getText() == null) {
-            throw new IllegalStateException(
-                    "No transcription returned");
-        }
+		MultipartBodyBuilder body = new MultipartBodyBuilder();
 
-        return response.getText();
-    }
+		body.part("file", audio.getResource()).contentType(MediaType.parseMediaType("audio/webm"));
 
+		body.part("model", "gpt-4o-mini-transcribe");
 
-    public static class TranscriptionResponse {
+		System.out.println("Sending audio to OpenAI");
 
-        private String text;
+		TranscriptionResponse response = restClient.post().uri("/v1/audio/transcriptions")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey).contentType(MediaType.MULTIPART_FORM_DATA)
+				.body(body.build()).retrieve().body(TranscriptionResponse.class);
 
-        public String getText() {
-            return text;
-        }
+		if (response == null || response.getText() == null) {
+			throw new IllegalStateException("No transcription returned");
+		}
 
-        public void setText(String text) {
-            this.text = text;
-        }
-    }
+		if (response.getUsage() != null) {
+
+			statisticsService.addTokens(response.getUsage().getInputTokens(), response.getUsage().getOutputTokens());
+		}
+
+		return response.getText();
+	}
+
+	public static class TranscriptionResponse {
+
+		private String text;
+		private Usage usage;
+
+		public String getText() {
+			return text;
+		}
+
+		public void setText(String text) {
+			this.text = text;
+		}
+
+		public Usage getUsage() {
+			return usage;
+		}
+
+		public void setUsage(Usage usage) {
+			this.usage = usage;
+		}
+	}
 }
