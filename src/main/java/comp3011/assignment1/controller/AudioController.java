@@ -25,9 +25,7 @@ public class AudioController {
     	
 
         if (audio.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("No audio received");
+            return ResponseEntity.badRequest().body("No audio received");
         }
 
         System.out.println(
@@ -45,9 +43,7 @@ public class AudioController {
                     "Transcription failed: "
                     + error.getMessage());
 
-            return ResponseEntity
-                    .internalServerError()
-                    .body("Transcription failed.");
+            return ResponseEntity.internalServerError().body("Transcription failed.");
         }
     }
 }

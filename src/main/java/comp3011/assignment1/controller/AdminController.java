@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class AdminController {
-
+	// Record the server start time once so later requests
+	// can calculate how long the current server process has been running.
     private final Instant serverStart = Instant.now();
 
     private final ConfigurableApplicationContext applicationContext;
 
-    private final AtomicBoolean shutdownStarted =
-            new AtomicBoolean(false);
+    private final AtomicBoolean shutdownStarted = new AtomicBoolean(false);
 
 
     public AdminController(
@@ -34,10 +34,9 @@ public class AdminController {
     public Map<String, Object> getUptime() {
 
         Instant now = Instant.now();
-
-        double uptimeSeconds =
-                Duration.between(serverStart, now).toMillis()
-                / 1000.0;
+        
+        // Calculate the elapsed time between server start and now, then convert milliseconds to seconds.
+        double uptimeSeconds = Duration.between(serverStart, now).toMillis() / 1000.0;
 
         Map<String, Object> response = new HashMap<>();
 
@@ -48,10 +47,12 @@ public class AdminController {
         return response;
     }
 
-
+ // AI assistance: ChatGPT helped explain how to implement a graceful
+ // Spring Boot shutdown while allowing the HTTP response to be returned first.
     @PostMapping("/api/v1/admin/shutdown")
     public ResponseEntity<Map<String, Object>> shutdown() {
-
+    	
+    	// Only the first shutdown request is accepted.
         if (!shutdownStarted.compareAndSet(false, true)) {
 
             Map<String, Object> error = new HashMap<>();
@@ -59,34 +60,25 @@ public class AdminController {
             error.put("timestamp", Instant.now().toString());
             error.put("status", 409);
             error.put("error", "Conflict");
-            error.put(
-                    "message",
-                    "Graceful shutdown is already in progress.");
-            error.put(
-                    "path",
-                    "/api/v1/admin/shutdown");
+            error.put("message", "Graceful shutdown is already in progress.");
+            error.put("path", "/api/v1/admin/shutdown");
 
-            return ResponseEntity
-                    .status(409)
-                    .body(error);
+            return ResponseEntity.status(409).body(error);
         }
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put(
-                "message",
-                "Graceful shutdown requested.");
+        response.put("message", "Graceful shutdown requested.");
 
         startShutdown();
 
-        return ResponseEntity
-                .status(202)
-                .body(response);
+        return ResponseEntity.status(202).body(response);
     }
 
 
     private void startShutdown() {
-
+        // Run the shutdown on another thread so the HTTP 202 response
+        // can be returned before the Spring application closes.
         Thread shutdownThread = new Thread(() -> {
 
             try {

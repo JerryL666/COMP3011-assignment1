@@ -50,13 +50,17 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
-		<!-- AI Assistance -->
-		<dependency> 
+
+		<!-- AI assistance: ChatGPT helped identify this dependency after
+      troubleshooting a missing Reactive Streams class on TITAN. -->
+		<dependency>
 			<groupId>org.reactivestreams</groupId>
 			<artifactId>reactive-streams</artifactId>
 			<version>1.0.4</version>
 		</dependency>
+		
+		
+		
 	</dependencies>
 
 	<build>

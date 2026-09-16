@@ -43,13 +43,17 @@ public class TranscriptionService {
 	        this.output_tokens = output_tokens;
 	    }
 	}
-
+	
+// AI assistance: ChatGPT helped explain how to create the multipart
+// HTTP request for the speech-to-text API using Spring RestClient.
 	public String transcribe(MultipartFile audio) {
 
 		if (apiKey.isBlank()) {
 			throw new IllegalStateException("OPENAI_API_KEY is not set");
 		}
-
+		
+		// Build a multipart request containing the recorded audio file
+		// and the speech-to-text model required by the API.
 		MultipartBodyBuilder body = new MultipartBodyBuilder();
 
 		body.part("file", audio.getResource()).contentType(MediaType.parseMediaType("audio/webm"));
@@ -65,7 +69,8 @@ public class TranscriptionService {
 		if (response == null || response.getText() == null) {
 			throw new IllegalStateException("No transcription returned");
 		}
-
+		
+		// Update the global token counters only after a successful transcription response containing usage information.
 		if (response.getUsage() != null) {
 
 			statisticsService.addTokens(response.getUsage().getInputTokens(), response.getUsage().getOutputTokens());

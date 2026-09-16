@@ -24,13 +24,8 @@ public class StatsController {
 
         Map<String, Long> response = new HashMap<>();
 
-        response.put(
-                "inputTokens",
-                statisticsService.getInputTokens());
-
-        response.put(
-                "outputTokens",
-                statisticsService.getOutputTokens());
+        response.put("inputTokens", statisticsService.getInputTokens());
+        response.put("outputTokens", statisticsService.getOutputTokens());
 
         return response;
     }
